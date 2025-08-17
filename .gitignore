@@ -22,30 +22,30 @@
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff
-ddpo-pytorch/.idea/**/workspace.xml
-ddpo-pytorch/.idea/**/tasks.xml
-ddpo-pytorch/.idea/**/usage.statistics.xml
-ddpo-pytorch/.idea/**/dictionaries
-ddpo-pytorch/.idea/**/shelf
+ddpo/.idea/**/workspace.xml
+ddpo/.idea/**/tasks.xml
+ddpo/.idea/**/usage.statistics.xml
+ddpo/.idea/**/dictionaries
+ddpo/.idea/**/shelf
 
 # AWS User-specific
-ddpo-pytorch/.idea/**/aws.xml
+ddpo/.idea/**/aws.xml
 
 # Generated files
-ddpo-pytorch/.idea/**/contentModel.xml
+ddpo/.idea/**/contentModel.xml
 
 # Sensitive or high-churn files
-ddpo-pytorch/.idea/**/dataSources/
-ddpo-pytorch/.idea/**/dataSources.ids
-ddpo-pytorch/.idea/**/dataSources.local.xml
-ddpo-pytorch/.idea/**/sqlDataSources.xml
-ddpo-pytorch/.idea/**/dynamic.xml
-ddpo-pytorch/.idea/**/uiDesigner.xml
-ddpo-pytorch/.idea/**/dbnavigator.xml
+ddpo/.idea/**/dataSources/
+ddpo/.idea/**/dataSources.ids
+ddpo/.idea/**/dataSources.local.xml
+ddpo/.idea/**/sqlDataSources.xml
+ddpo/.idea/**/dynamic.xml
+ddpo/.idea/**/uiDesigner.xml
+ddpo/.idea/**/dbnavigator.xml
 
 # Gradle
-ddpo-pytorch/.idea/**/gradle.xml
-ddpo-pytorch/.idea/**/libraries
+ddpo/.idea/**/gradle.xml
+ddpo/.idea/**/libraries
 
 # Gradle and Maven with auto-import
 # When using Gradle or Maven with auto-import, you should exclude module files,
@@ -61,53 +61,53 @@ ddpo-pytorch/.idea/**/libraries
 # *.ipr
 
 # CMake
-ddpo-pytorch/cmake-build-*/
+ddpo/cmake-build-*/
 
 # Mongo Explorer plugin
-ddpo-pytorch/.idea/**/mongoSettings.xml
+ddpo/.idea/**/mongoSettings.xml
 
 # File-based project format
 *.iws
 
 # IntelliJ
-ddpo-pytorch/out/
+ddpo/out/
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
 # JIRA plugin
-ddpo-pytorch/atlassian-ide-plugin.xml
+ddpo/atlassian-ide-plugin.xml
 
 # Cursive Clojure plugin
-ddpo-pytorch/.idea/replstate.xml
+ddpo/.idea/replstate.xml
 
 # SonarLint plugin
-ddpo-pytorch/.idea/sonarlint/
+ddpo/.idea/sonarlint/
 
 # Crashlytics plugin (for Android Studio and IntelliJ)
-ddpo-pytorch/com_crashlytics_export_strings.xml
-ddpo-pytorch/crashlytics.properties
-ddpo-pytorch/crashlytics-build.properties
-ddpo-pytorch/fabric.properties
+ddpo/com_crashlytics_export_strings.xml
+ddpo/crashlytics.properties
+ddpo/crashlytics-build.properties
+ddpo/fabric.properties
 
 # Editor-based Rest Client
-ddpo-pytorch/.idea/httpRequests
+ddpo/.idea/httpRequests
 
 # Android studio 3.1+ serialized cache file
-ddpo-pytorch/.idea/caches/build_file_checksums.ser
+ddpo/.idea/caches/build_file_checksums.ser
 
 ### Intellij+all Patch ###
 # Ignore everything but code style settings and run configurations
 # that are supposed to be shared within teams.
 
-ddpo-pytorch/.idea/*
+ddpo/.idea/*
 
-ddpo-pytorch/!.idea/codeStyles
-ddpo-pytorch/!.idea/runConfigurations
+ddpo/!.idea/codeStyles
+ddpo/!.idea/runConfigurations
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
-ddpo-pytorch/__pycache__/
+ddpo/__pycache__/
 *.py[cod]
 *$py.class
 
@@ -115,24 +115,24 @@ ddpo-pytorch/__pycache__/
 *.so
 
 # Distribution / packaging
-ddpo-pytorch/.Python
-ddpo-pytorch/build/
-ddpo-pytorch/develop-eggs/
-ddpo-pytorch/dist/
-ddpo-pytorch/downloads/
-ddpo-pytorch/eggs/
-ddpo-pytorch/.eggs/
-ddpo-pytorch/lib/
-ddpo-pytorch/lib64/
-ddpo-pytorch/parts/
-ddpo-pytorch/sdist/
-ddpo-pytorch/var/
-ddpo-pytorch/wheels/
-ddpo-pytorch/share/python-wheels/
+ddpo/.Python
+ddpo/build/
+ddpo/develop-eggs/
+ddpo/dist/
+ddpo/downloads/
+ddpo/eggs/
+ddpo/.eggs/
+ddpo/lib/
+ddpo/lib64/
+ddpo/parts/
+ddpo/sdist/
+ddpo/var/
+ddpo/wheels/
+ddpo/share/python-wheels/
 *.egg-info/
-ddpo-pytorch/.installed.cfg
+ddpo/.installed.cfg
 *.egg
-ddpo-pytorch/MANIFEST
+ddpo/MANIFEST
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -141,23 +141,23 @@ ddpo-pytorch/MANIFEST
 *.spec
 
 # Installer logs
-ddpo-pytorch/pip-log.txt
-ddpo-pytorch/pip-delete-this-directory.txt
+ddpo/pip-log.txt
+ddpo/pip-delete-this-directory.txt
 
 # Unit test / coverage reports
-ddpo-pytorch/htmlcov/
-ddpo-pytorch/.tox/
-ddpo-pytorch/nox/
-ddpo-pytorch/.coverage
-ddpo-pytorch/.coverage.*
-ddpo-pytorch/.cache
-ddpo-pytorch/nosetests.xml
-ddpo-pytorch/coverage.xml
+ddpo/htmlcov/
+ddpo/.tox/
+ddpo/nox/
+ddpo/.coverage
+ddpo/.coverage.*
+ddpo/.cache
+ddpo/nosetests.xml
+ddpo/coverage.xml
 *.cover
 *.py,cover
-ddpo-pytorch/.hypothesis/
-ddpo-pytorch/.pytest_cache/
-ddpo-pytorch/cover/
+ddpo/.hypothesis/
+ddpo/.pytest_cache/
+ddpo/cover/
 
 # Translations
 *.mo
@@ -165,30 +165,30 @@ ddpo-pytorch/cover/
 
 # Django stuff:
 *.log
-ddpo-pytorch/local_settings.py
-ddpo-pytorch/db.sqlite3
-ddpo-pytorch/db.sqlite3-journal
+ddpo/local_settings.py
+ddpo/db.sqlite3
+ddpo/db.sqlite3-journal
 
 # Flask stuff:
-ddpo-pytorch/instance/
-ddpo-pytorch/.webassets-cache
+ddpo/instance/
+ddpo/.webassets-cache
 
 # Scrapy stuff:
-ddpo-pytorch/.scrapy
+ddpo/.scrapy
 
 # Sphinx documentation
-ddpo-pytorch/docs/_build/
+ddpo/docs/_build/
 
 # PyBuilder
-ddpo-pytorch/.pybuilder/
-ddpo-pytorch/target/
+ddpo/.pybuilder/
+ddpo/target/
 
 # Jupyter Notebook
-ddpo-pytorch/.ipynb_checkpoints
+ddpo/.ipynb_checkpoints
 
 # IPython
-ddpo-pytorch/profile_default/
-ddpo-pytorch/ipython_config.py
+ddpo/profile_default/
+ddpo/ipython_config.py
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
@@ -215,50 +215,50 @@ ddpo-pytorch/ipython_config.py
 #   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
 #   in version control.
 #   https://pdm.fming.dev/#use-with-ide
-ddpo-pytorch/.pdm.toml
+ddpo/.pdm.toml
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-ddpo-pytorch/__pypackages__/
+ddpo/__pypackages__/
 
 # Celery stuff
-ddpo-pytorch/celerybeat-schedule
-ddpo-pytorch/celerybeat.pid
+ddpo/celerybeat-schedule
+ddpo/celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
 
 # Environments
-ddpo-pytorch/.env
-ddpo-pytorch/.venv
-ddpo-pytorch/env/
-ddpo-pytorch/venv/
-ddpo-pytorch/ENV/
-ddpo-pytorch/env.bak/
-ddpo-pytorch/venv.bak/
+ddpo/.env
+ddpo/.venv
+ddpo/env/
+ddpo/venv/
+ddpo/ENV/
+ddpo/env.bak/
+ddpo/venv.bak/
 
 # Spyder project settings
-ddpo-pytorch/.spyderproject
-ddpo-pytorch/.spyproject
+ddpo/.spyderproject
+ddpo/.spyproject
 
 # Rope project settings
-ddpo-pytorch/.ropeproject
+ddpo/.ropeproject
 
 # mkdocs documentation
-ddpo-pytorch//site
+ddpo//site
 
 # mypy
-ddpo-pytorch/.mypy_cache/
-ddpo-pytorch/.dmypy.json
-ddpo-pytorch/dmypy.json
+ddpo/.mypy_cache/
+ddpo/.dmypy.json
+ddpo/dmypy.json
 
 # Pyre type checker
-ddpo-pytorch/.pyre/
+ddpo/.pyre/
 
 # pytype static type analyzer
-ddpo-pytorch/.pytype/
+ddpo/.pytype/
 
 # Cython debug symbols
-ddpo-pytorch/cython_debug/
+ddpo/cython_debug/
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
@@ -269,56 +269,56 @@ ddpo-pytorch/cython_debug/
 
 ### Python Patch ###
 # Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
-ddpo-pytorch/poetry.toml
+ddpo/poetry.toml
 
 # ruff
-ddpo-pytorch/.ruff_cache/
+ddpo/.ruff_cache/
 
 # LSP config files
-ddpo-pytorch/pyrightconfig.json
+ddpo/pyrightconfig.json
 
 ### Vim ###
 # Swap
-ddpo-pytorch/[._]*.s[a-v][a-z]
-ddpo-pytorch/!*.svg  # comment out if you don't need vector files
-ddpo-pytorch/[._]*.sw[a-p]
-ddpo-pytorch/[._]s[a-rt-v][a-z]
-ddpo-pytorch/[._]ss[a-gi-z]
-ddpo-pytorch/[._]sw[a-p]
+ddpo/[._]*.s[a-v][a-z]
+ddpo/!*.svg  # comment out if you don't need vector files
+ddpo/[._]*.sw[a-p]
+ddpo/[._]s[a-rt-v][a-z]
+ddpo/[._]ss[a-gi-z]
+ddpo/[._]sw[a-p]
 
 # Session
-ddpo-pytorch/Session.vim
-ddpo-pytorch/Sessionx.vim
+ddpo/Session.vim
+ddpo/Sessionx.vim
 
 # Temporary
-ddpo-pytorch/.netrwhist
-ddpo-pytorch/*~
+ddpo/.netrwhist
+ddpo/*~
 # Auto-generated tag files
-ddpo-pytorch/tags
+ddpo/tags
 # Persistent undo
-ddpo-pytorch/[._]*.un~
+ddpo/[._]*.un~
 
 ### VisualStudioCode ###
-ddpo-pytorch/.vscode/*
-ddpo-pytorch/!.vscode/settings.json
-ddpo-pytorch/!.vscode/tasks.json
-ddpo-pytorch/!.vscode/launch.json
-ddpo-pytorch/!.vscode/extensions.json
-ddpo-pytorch/!.vscode/*.code-snippets
+ddpo/.vscode/*
+ddpo/!.vscode/settings.json
+ddpo/!.vscode/tasks.json
+ddpo/!.vscode/launch.json
+ddpo/!.vscode/extensions.json
+ddpo/!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
-ddpo-pytorch/.history/
+ddpo/.history/
 
 # Built Visual Studio Code Extensions
 *.vsix
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
-ddpo-pytorch/.history
-ddpo-pytorch/.ionide
+ddpo/.history
+ddpo/.ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,intellij+all,vim
 
-ddpo-pytorch/wandb/
-ddpo-pytorch/logs/
-ddpo-pytorch/notebooks/
+ddpo/wandb/
+ddpo/logs/
+ddpo/notebooks/
