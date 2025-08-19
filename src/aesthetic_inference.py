@@ -5,12 +5,11 @@ import pandas as pd
 from PIL import Image
 from io import BytesIO
 import os
-import torch
 import torch.nn as nn
-from os.path import expanduser  # pylint: disable=import-outside-toplevel
-from urllib.request import urlretrieve  # pylint: disable=import-outside-toplevel
-import torch.nn.functional as F  # Import normalization function
-from tqdm import tqdm  # Progress bar
+from os.path import expanduser
+from urllib.request import urlretrieve
+import torch.nn.functional as F
+from tqdm import tqdm
 
 # Load CLIP model
 def load_clip_model(clip_model_name="ViT-L-14", device="cpu"):
@@ -40,7 +39,9 @@ def get_clip_embedding(image_url, model, preprocess, device="cpu"):
 
     return embedding
 
+
 def get_clip_embedding_from_image(image, model, preprocess, device="cpu"):
+    """Get CLIP embedding from a PIL image object."""
     image_tensor = preprocess(image).unsqueeze(0).to(device)
     with torch.no_grad():
         embedding = model.encode_image(image_tensor).float()
@@ -74,93 +75,48 @@ def get_aesthetic_model(clip_model="vit_l_14", device="cpu"):
     m.to(device).eval()
     return m
 
-# Compute aesthetic score for a single image
-def get_single_aesthetic_score(image_url, clip_model_name="ViT-L-14", device=None):
-    if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # Load models once
-    clip_model, preprocess = load_clip_model(clip_model_name, device)
-    aesthetic_model = get_aesthetic_model("vit_l_14", device)
-
-    # get normalized clip embedding
-    embedding = get_clip_embedding(image_url, clip_model, preprocess, device)
-    if embedding is None:
-        return None  # Return None if image loading failed
-
-    # get aesthetic score
-    with torch.no_grad(): # no training -> no_grad()
-        score = aesthetic_model(embedding).item()
-
-    return score
-
-# get function used when calculating scores for an entire dataframe
-# returns the score and the embedding
 def get_aesthetic_score(image_url, clip_model, preprocess, aesthetic_model, device):
+    """Return the aesthetic score and embedding for a given image URL."""
     embedding = get_clip_embedding(image_url, clip_model, preprocess, device)
     if embedding is None:
         return None, None  # Skip if image loading fails
-
     with torch.no_grad():
         score = aesthetic_model(embedding).item()
-
     return score, embedding.squeeze(0).cpu().numpy().tolist()
 
-# Process a Pandas column of image URLs
 def process_image_column(df, column_name, clip_model_name="ViT-L-14", device=None, drop_invalid=True, batch_size=32, save_interval=20000, output_path=None, return_df=False):
+    """Process a DataFrame column of image URLs, compute aesthetic scores and embeddings, and save results."""
     if column_name not in df.columns:
         raise ValueError(f"Column '{column_name}' not found in DataFrame.")
-
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # Load models once for efficiency
     clip_model, preprocess = load_clip_model(clip_model_name, device)
     aesthetic_model = get_aesthetic_model("vit_l_14", device)
-
-    # Load existing scores if resuming
     if "aesthetic_score" in df.columns:
         processed_rows = df["aesthetic_score"].notna().sum()
     else:
         df["aesthetic_score"] = None
         processed_rows = 0
-
     if "clip_embedding" not in df.columns:
         df["clip_embedding"] = None
-
     image_urls = df[column_name].tolist()
-
     for i in tqdm(range(processed_rows, len(image_urls), batch_size), desc="Processing Images (Batch Size 32)"):
         batch_urls = image_urls[i : i + batch_size]
-        #batch_results = [get_aesthetic_score(url, clip_model, preprocess, aesthetic_model, device) for url in batch_urls]
-        #batch_scores, batch_embeddings = zip(*batch_results)
-
         batch_scores = []
         batch_embeddings = []
-
         for url in batch_urls:
             score, embedding = get_aesthetic_score(url, clip_model, preprocess, aesthetic_model, device)
-            batch_scores.append(score)           # Can be None
-            batch_embeddings.append(embedding)   # Can be None
-
+            batch_scores.append(score)
+            batch_embeddings.append(embedding)
         df.loc[:, "aesthetic_score"].iloc[i:i+batch_size] = batch_scores
         df.loc[:, "clip_embedding"].iloc[i:i+batch_size] = batch_embeddings
-
-        if output_path and i % save_interval == 0:  # Save progress
+        if output_path and i % save_interval == 0:
             df.to_parquet(output_path, index=False)
-
-    # Drop rows with invalid links if drop_invalid=True
     if drop_invalid:
         df = df.dropna(subset=["aesthetic_score"]).reset_index(drop=True)
-
     if return_df:
         df.to_parquet(output_path, index=False)
         return df
     else:
         df.to_parquet(output_path, index=False)
         return
-
-# Load image URLs from parquet file
-def process_parquet(parquet_path, column_name, output_path=None, clip_model_name="ViT-L-14", device=None, drop_invalid=True, batch_size=32, save_interval=20000):
-    df = pd.read_parquet(parquet_path)
-    return process_image_column(df, column_name, clip_model_name, device, drop_invalid, batch_size, save_interval, output_path)

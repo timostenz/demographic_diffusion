@@ -1,7 +1,6 @@
 import random
 import pandas as pd
 import numpy as np
-from aesthetic_inference import *
 
 clicktopurchase_ratio = {
     ('appliances', 'Air Conditioners'): 0.05,
@@ -682,73 +681,10 @@ heuristics = {
     }
 }
 
-def clean_ratings(rating):
-    # Ensure the input is a string, replace commas, and check if it's numeric
-    if isinstance(rating, str):  # Check if the value is a string
-        rating_cleaned = rating.replace(',', '')  # Remove commas
-        if rating_cleaned.isdigit():  # If it is numeric after removing commas
-            return int(rating_cleaned)  # Convert to float
-    return np.nan  # Return NaN for non-numeric values
-def estimate_purchases(data, ratings_col='corrected_no_of_ratings'):
-    """
-    Estimate total purchases by separating NaN and non-NaN cases.
-    
-    Returns:
-        pd.Series: A Series containing the estimated purchases.
-    """
-    # Copy the data to avoid modifying the original DataFrame
-    data = data.copy()
-
-    # Step 1: For rows where ratings are not NaN
-    non_nan_mask = data[ratings_col].notna()
-    data.loc[non_nan_mask, 'estimated_purchases'] = (
-        data.loc[non_nan_mask, ratings_col] / np.random.normal(0.02, 0.004, size=non_nan_mask.sum()) # 2% of sales leave reviews -> between 1.6 and 2.4 with uncertainty
-    )
-
-    # Step 2: For rows where ratings are NaN
-    nan_mask = data[ratings_col].isna()
-    data.loc[nan_mask, 'estimated_purchases'] = np.random.normal(50, 30, size=nan_mask.sum())
-
-    # Ensure all values are integers and non-negative
-    data['estimated_purchases'] = data['estimated_purchases'].apply(lambda x: max(int(x), 0))
-
-    return data['estimated_purchases']
-def convert_to_float_with_nan(series):
-    """
-    Convert a pandas Series to float, replacing non-convertible values with NaN,
-    and leaving existing NaN values unchanged.
-
-    Args:
-        series (pd.Series): The input Series to convert.
-
-    Returns:
-        pd.Series: The Series converted to float, with invalid values as NaN.
-    """
-    def safe_convert(value):
-        if pd.isna(value):  # If the value is already NaN, return it as is
-            return np.nan
-        try:
-            return float(value)  # Attempt to convert to float
-        except ValueError:
-            return np.nan  # Replace non-convertible values with NaN
-    
-    return series.apply(safe_convert)
 def get_ctp_rate(row):
     category_tuple = (row['main_category'], row['sub_category'])
-    return clicktopurchase_ratio.get(category_tuple, None)  # Return None if no match found
+    return clicktopurchase_ratio.get(category_tuple, None)
 def calculate_ctr(data, base_ctrs):
-    """
-    Calculate the click-through rate (CTR) based on category, rating, and discount.
-    
-    Parameters:
-        main_category (str): The main category of the product.
-        sub_category (str): The sub-category of the product.
-        rating (float): The product's average rating (1 to 5).
-        discount (float): The discount on the product as a percentage (0 to 100).
-        
-    Returns:
-        float: The estimated CTR as a fraction (e.g., 0.0035 for 0.35%).
-    """
     # Copy the data to avoid modifying the original DataFrame
     data = data.copy()
 
@@ -756,7 +692,6 @@ def calculate_ctr(data, base_ctrs):
     data['base_ctr'] = pd.Series(list(zip(data['main_category'], data['sub_category']))).map(base_ctrs)
     
     # Calculate the rating factor (scale 1-5 stars to a multiplier between 0.8 and 1.2 -> changed to 0.2 to 1.8 -> 0.0 to 1.72)
-    #not na rows
     non_nan_mask = data['ratings'].notna()
     data.loc[non_nan_mask, 'rating_factor'] = 1 + 0.5 * (data.loc[non_nan_mask, 'ratings'] - (sum(data.loc[non_nan_mask, 'ratings'])/len(data.loc[non_nan_mask, 'ratings'])))  # Rating 3 is neutral, below 3 decreases CTR, above increases
 
@@ -764,7 +699,7 @@ def calculate_ctr(data, base_ctrs):
     data.loc[nan_mask, 'rating_factor'] = 1
     data['rating_factor'] = data['rating_factor'].apply(lambda x: max(x, 0))
     
-    # Calculate the discount factor (scale 0-100% discount to a multiplier between 0.9 and 1.5 -> changed to 0.9 to 2.1)  -> 0.8 to2.5 -> 0.5 to 2.2
+    # Calculate the discount factor (scale 0-100% discount to a multiplier between 0.5 to 2.2
     non_nan_discount = data['discount_percentage'].notna()
     data.loc[non_nan_discount, 'discount_factor'] = 0.5 + 1.7 * (data.loc[non_nan_discount, 'discount_percentage'].clip(upper=100) / 100)  # Cap discount at 100%
 
@@ -777,17 +712,13 @@ def calculate_ctr(data, base_ctrs):
     nan_aprice = data['discount_price'].isna() & data['actual_price'].isna()
     non_nan_aprice = data['discount_price'].isna() & data['actual_price'].notna()
     data.loc[non_nan_price, 'price_factor'] = 0.65 + np.exp(-(data.loc[non_nan_price, 'discount_price'] / ((sum(data.loc[non_nan_price, 'discount_price'])+sum(data.loc[non_nan_aprice, 'actual_price']))/(len(data.loc[non_nan_price, 'discount_price'])+len(data.loc[non_nan_aprice, 'actual_price'])))))
-
     # where discount price is not available but the actual price is available
-    #nan_price = data['discount_price'].isna()
-
     data.loc[non_nan_aprice, 'price_factor'] = 0.65 + np.exp(-(data.loc[non_nan_aprice, 'actual_price'] / ((sum(data.loc[non_nan_price, 'discount_price'])+sum(data.loc[non_nan_aprice, 'actual_price']))/(len(data.loc[non_nan_price, 'discount_price'])+len(data.loc[non_nan_aprice, 'actual_price'])))))
     # where both is na set to 0.9
     data.loc[nan_aprice, 'price_factor'] = 0.65
 
-    #cap all between 0 and 10!!
     data['aesthetic_score'] = data['aesthetic_score'].apply(lambda x: max(0, min(x, 10)))
-    data['aesthetic_factor'] = 1 + 0.3 * (data['aesthetic_score'] - 5) # rating factor between 0.1 and 1.9 -> 0 and 2.5
+    data['aesthetic_factor'] = 1 + 0.3 * (data['aesthetic_score'] - 5) # rating factor between 0 and 2.5
     data['aesthetic_factor'] = data['aesthetic_factor'].apply(lambda x: max(x, 0))
     
     # Final CTR calculation
@@ -797,14 +728,12 @@ def calculate_ctr(data, base_ctrs):
     data['ctr'] = np.random.normal(data['ctr'], 0.00005)
     
     # Ensure the CTR is within a reasonable range (e.g., 0.001 to 0.05)
-    data['ctr'] = data['ctr'].apply(lambda x: max(0.001, min(x, 0.5))) # Cap CTR between 0.1% and 5% -> 50% for now
+    data['ctr'] = data['ctr'].apply(lambda x: max(0.001, min(x, 0.5))) # Cap CTR between 0.1% and 50%
 
     return data['ctr']
 def apply_gender_split(row):
-    """
-    Applies gender split based on the heuristic for the given row.
-    """
-    category_tuple = (row['main_category'], row['sub_category'])  # Adjust column names as needed
+    """Return (male_prob, female_prob) for a row based on heuristics, with noise."""
+    category_tuple = (row['main_category'], row['sub_category'])
     if category_tuple in heuristics:
         male_prob = heuristics[category_tuple]['male_probability']
         # Add noise
@@ -816,23 +745,16 @@ def apply_gender_split(row):
         male_prob, female_prob = 0.5, 0.5
     return male_prob, female_prob
 def apply_age_split(row):
-    """
-    Applies age group split based on the heuristic for the given row.
-    """
-    category_tuple = (row['main_category'], row['sub_category'])  # Adjust column names as needed
+    """Return a dict of age-group split metrics for a row based on heuristics, with noise."""
+    category_tuple = (row['main_category'], row['sub_category'])
     age_groups = ['18-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75-85']
     if category_tuple in heuristics:
         age_probs = heuristics[category_tuple]['age_distribution']
     else:
         # Default uniform split if no heuristic is found
         age_probs = [1 / len(age_groups)] * len(age_groups)
-
-    # Function to generate noisy and normalized probabilities
     def generate_noisy_probs(base_probs, noise_level=0.02):
-        noisy_probs = [
-            max(0, prob + np.random.uniform(-noise_level, noise_level))
-            for prob in base_probs
-        ]
+        noisy_probs = [max(0, prob + np.random.uniform(-noise_level, noise_level)) for prob in base_probs]
         total_prob = sum(noisy_probs)
         return [p / total_prob for p in noisy_probs]
     
@@ -861,42 +783,7 @@ def apply_age_split(row):
 def create_data(file_path = "Amazon-Products.csv", out_path = "synthetic_data.parquet"):
 
     random.seed(6)
-
-    data = pd.read_parquet(file_path)#read_csv(file_path)
-
-    # change prices to float
-    #data['actual_price'] = data['actual_price'].str.replace('₹', '').str.replace(',', '').astype(float)
-    #data['discount_price'] = data['discount_price'].str.replace('₹', '').str.replace(',', '').astype(float)
-
-    # Add a discount percentage column
-    #data['discount_percentage'] = ((data['actual_price'] - data['discount_price']) / data['actual_price']) * 100
-
-    # clean number ofratings
-    #data['no_of_ratings'] = data['no_of_ratings'].apply(clean_ratings) # pandas converts to float because of containing NaN values
-
-    # clean ratings
-    #data['ratings'] = convert_to_float_with_nan(data['ratings'])
-
-    # Correct number of ratings for products where ratings are aggregated across products
-    #data['first_word_name'] = data['name'].str.split().str[0] # Extract the first word of the name
-    # create groups where first word, rating, no of ratings and category are the same
-    #data['group_index'] = data.groupby(['ratings', 'no_of_ratings', 'main_category', 'first_word_name']).ngroup()
-    # count group members
-    #data['group_count'] = data.groupby('group_index')['group_index'].transform('size')
-    # Add the corrected number of ratings (only if group count > number of ratings)
-    #data['corrected_no_of_ratings'] = data.apply(
-    #    lambda row: int(row['no_of_ratings'] / row['group_count']) 
-    #    if row['no_of_ratings'] > row['group_count'] else row['no_of_ratings'], axis=1
-    #)
-
-    # estimate purchases based on no of ratings
-    #data['estimated_purchases'] = estimate_purchases(data)
-
-    # get the click to purchase ratio and estimate clicks
-    #data['clicktopurchase_ratio'] = np.random.normal(data.apply(get_ctp_rate, axis=1), 0.0015)
-    #data['estimated_clicks'] = (data['estimated_purchases'] / data['clicktopurchase_ratio']).astype('int64')
-
-    # calculate ctr's based on base-ctr's
+    data = pd.read_parquet(file_path)
     data['ctr'] = calculate_ctr(data, base_ctrs)
 
     # impressions
@@ -927,8 +814,6 @@ def create_data(file_path = "Amazon-Products.csv", out_path = "synthetic_data.pa
     data = pd.concat([data, age_split_data], axis=1)
 
     data.to_parquet(out_path, index=False)
-
-    return
 
 if __name__ == '__main__':
     

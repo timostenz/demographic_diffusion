@@ -2,17 +2,14 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, random_split
 import numpy as np
-import pyarrow.parquet as pq
 from sklearn.metrics import roc_auc_score, accuracy_score, f1_score, log_loss
-from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import time
 import json
-from sklearn.linear_model import SGDClassifier, LogisticRegression
-import joblib  # for saving the model
+from sklearn.linear_model import SGDClassifier
+import joblib
 from sklearn.multiclass import OneVsRestClassifier
 
 # MLPFusion class
@@ -236,13 +233,9 @@ def train_deepfm_with_validation(
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=16, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=16, pin_memory=True)
 
-    print(f"sanity check dimension: {shape}")
-
     # Model
     model = DeepFM(
         feature_sizes=feature_sizes,
-        #fusion_module=fusion_module,
-        #fusion_input_dim=fusion_input_dim,
         embedding_size=embedding_size,
         hidden_dims=shape,
         dropout=dropout
@@ -381,10 +374,7 @@ def evaluate_deepfm(
     # Load embedding lookup
     embedding_lookup_df = pd.read_parquet(embedding_lookup_path)
 
-    # Infer feature sizes
-    #test_df = pd.read_parquet(data_path)
-    #feature_sizes = {col: int(test_df[col].nunique()) for col in categorical_cols}
-    feature_sizes_list = [19, 110, 2, 7, 1, 1, 1, 1, 1]#[feature_sizes[col] for col in categorical_cols]
+    feature_sizes_list = [19, 110, 2, 7, 1, 1, 1, 1, 1]
 
     # Prepare dataset
     dataset = ParquetDeepFMDatasetWithLookup(
@@ -399,19 +389,10 @@ def evaluate_deepfm(
 
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=16, pin_memory=True)
 
-    # Build and load model
-    #fusion_module = MLPFusion(
-    #    clip_dim=fusion_input_dim // 2,
-    #    demo_emb_dim=demo_emb_dim,
-    #    joint_dim=fusion_hidden_dim
-    #)
-
     model = DeepFM(
         feature_sizes=feature_sizes_list,
         embedding_size=embedding_size,
         hidden_dims=shape
-        #fusion_module=fusion_module,
-        #fusion_input_dim=fusion_input_dim
     ).to(device)
 
     model.load_state_dict(torch.load(model_path, map_location=device))

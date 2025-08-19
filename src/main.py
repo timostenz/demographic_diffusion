@@ -2,32 +2,40 @@ import argparse
 import pandas as pd
 import os
 import json
-from aesthetic_inference import *
-from create_data import *
-from change_dataformat import *
-from text_embedding_generator import *
-from reward_function import *
-from finetuning import *
+import torch
+from aesthetic_inference import process_image_column
+from create_data import create_data
+from change_dataformat import preprocess_and_expand
+from text_embedding_generator import process_text_column
+from reward_function import (
+    ParquetDeepFMDatasetWithLookup,
+    train_deepfm_with_validation,
+    DemographicRegularizer,
+    evaluate_deepfm
+)
+from image_evaluation import generate_images_embeddings, compute_deepfm_reward
+from reward_function import ClipEmbeddingGenderDataset, train_logreg_on_clip_embedding_gender_probe, train_logreg_on_clip_embedding_age_probe
 
 def main():
     parser = argparse.ArgumentParser(description="Run aesthetic inference or create synthetic data.")
     
-    # Common argument to choose task
-    parser.add_argument("--task", type=str, choices=["aesthetic_inference",
-                                                     "clip_text_inference",
-                                                     "create_data",
-                                                     "expand_dataset",
-                                                     "prepare_training",
-                                                     "train_reward_function",
-                                                     "evaluate",
-                                                     "train_clip_gender_probe",
-                                                     "train_clip_age_probe",
-                                                     "train_clip_age_probe_aggregated",
-                                                     "generate_images_embeddings", 
-                                                     "get_image_rewards",
-                                                     "rl_finetune"], required=True, help="Choose the task to run.")
+    parser.add_argument("--task", type=str, choices=[
+        "aesthetic_inference",
+        "clip_text_inference",
+        "create_data",
+        "expand_dataset",
+        "prepare_training",
+        "train_reward_function",
+        "evaluate",
+        "train_clip_gender_probe",
+        "train_clip_age_probe",
+        "train_clip_age_probe_aggregated",
+        "generate_images_embeddings",
+        "get_image_rewards",
+        "rl_finetune"
+    ], required=True, help="Choose the task to run.")
 
-    # Arguments for aesthetic inference & BERT inference
+    # Arguments for aesthetic inference
     parser.add_argument("--parquet_path", type=str, help="Path to the input parquet file (for aesthetic inference).")
     parser.add_argument("--column_name", type=str, help="Name of the column containing image URLs.")
     parser.add_argument("--output", type=str, default="output.parquet", help="Path to save the processed parquet file.")
@@ -71,11 +79,6 @@ def main():
     parser.add_argument("--prompt_file", type=str, help="Path to file with prompts for baseline generation.")
     parser.add_argument("--output_baseline", type=str, help="Path to save baseline generation output.")
     parser.add_argument("--output_rewards", type=str, help="Path to save reward generation output.")
-
-    #arguments for rl fine tuning
-    parser.add_argument("--output_diffusion_path", type=str, default="rl_finetuned_sd", help="Where to save the fine-tuned model.")
-    parser.add_argument("--rl_method", type=str, default="rwr", help="RL method used for fine-tuning.")
-    parser.add_argument("--use_kl_reg", action="store_true", help="Use KL regularization during fine tuning.")
 
     args = parser.parse_args()
 
@@ -167,12 +170,9 @@ def main():
                 json.dump(feature_sizes, f)
 
         # Ensure feature_sizes is a list in correct order
-        feature_sizes_list = [19, 110, 2, 7, 1, 1, 1, 1, 1]# ones for continous features#[feature_sizes[col] for col in categorical_cols]
+        feature_sizes_list = [19, 110, 2, 7, 1, 1, 1, 1, 1]# ones for continous features
 
         print(f"Feature sizes: {feature_sizes_list}")
-
-        text_dim = 768  # or: int(np.load("train_data_text_dim.npy")[0])
-        image_dim = 768
 
         print("Preparing training dataset...")
         dataset = ParquetDeepFMDatasetWithLookup(
@@ -185,31 +185,8 @@ def main():
             label_col="clicked"
         )
 
-        #dataloader = DataLoader(
-        #    dataset,
-        #    batch_size=512,
-        #    shuffle=True,
-        #    num_workers=4,
-        #    pin_memory=True
-        #)
-
-        # Define fusion module
-        fusion_module = MLPFusion(
-            clip_dim=text_dim,  # assuming both text/image are same size
-            demo_emb_dim=8,
-            joint_dim=64
-        )
-
         # Train
         print("Starting training...")
-        #model, loss_hist = train_deepfm_from_dataloader(
-        #    dataloader=dataloader,
-        #    feature_sizes=feature_sizes_list,
-        #    epochs=args.epochs,
-        #    lr=args.lr,
-        #    fusion_module=fusion_module,
-        #    fusion_input_dim=text_dim + image_dim
-        #)
 
         # Optionally load demographic regularizers
         dem_regularizers = None
@@ -229,8 +206,6 @@ def main():
             feature_sizes=feature_sizes_list,
             epochs=args.epochs,
             lr=args.lr,
-            #fusion_module=fusion_module,
-            #fusion_input_dim=text_dim + image_dim,
             batch_size=args.batch_size_training,
             val_split=0.1,
             dropout=[args.dropout, args.dropout, args.dropout],
@@ -244,7 +219,6 @@ def main():
 
         # Save model and training history
         torch.save(model.state_dict(), args.model_out)
-        #pd.DataFrame({"loss": loss_hist}).to_csv(args.loss_out, index=False)
 
         print(f"Model saved to {args.model_out}")
         print(f"Loss history saved to {args.loss_out}")
@@ -332,36 +306,6 @@ def main():
             data_path=args.output_baseline,
             model_path=args.model_out,
             output_path=args.output_rewards
-        )
-
-    elif args.task == "rl_finetune":
-        if not args.prompt_file or not args.model_out:
-            raise ValueError("You must specify --prompt_file and --deepfm_model")
-        
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        print("Loading models...")
-        pipe = load_pipeline_and_models(device="cuda" if torch.cuda.is_available() else "cpu")
-        pipe.unet.enable_gradient_checkpointing()
-
-        print("Loading prompts...")
-        df_prompts = pd.read_parquet(args.prompt_file)
-
-        # Load reward queries
-        df_reward_queries = pd.read_parquet("df_evaluation_normalized.parquet").head(500)  # replace with your path
-
-        reward_fn = make_deepfm_reward_function(args.model_out, device)
-
-        print("Starting RL fine-tuning...")
-        rl_finetune_loop(
-            pipe=pipe,
-            df_prompts=df_prompts,
-            df_queries=df_reward_queries,
-            reward_model_fn=reward_fn,
-            num_epochs=args.epochs,
-            device=device,
-            rl_method=args.rl_method,
-            use_kl_reg=args.use_kl_reg
         )
 
 
