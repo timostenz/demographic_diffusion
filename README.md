@@ -5,89 +5,57 @@ This repository demonstrates a proof of concept: a diffusion model can be succes
 
 This code was developed for a research study, which will be linked here once it becomes publicly available.
 
-## The `src` Directory
-
-The `src` part of the repository provides a modular pipeline for generating synthetic data, running aesthetic inference, training reward models, and learning *demographic regularizers* to guide diffusion model fine-tuning.
-
 ## Workflow Overview
 
+To replicate our results, please follow these steps.
 
-1. **Data Creation**
-	 - Generate a synthetic dataset from your raw product data. (We used this dataset: https://www.kaggle.com/datasets/lokeshparab/amazon-products-dataset/)
-	 - Command:
-		 ```bash
-		 python src/main.py --task create_data
-		 ```
 
-2. **Aesthetic Inference**
-	 - Compute aesthetic scores for images using CLIP and an aesthetic model.
-	 - Command:
-		 ```bash
-		 python src/main.py --task aesthetic_inference
-		 ```
+1. Create a synthetic dataset from raw product data (using the [Amazon-Products.csv](https://www.kaggle.com/datasets/lokeshparab/amazon-products-dataset/) dataset).
+    ```bash
+    python src/main.py --task create_data
+    ```
 
-3. **Expand Data**
-	 - Expand and preprocess the data for training (e.g., one row per customer).
-	 - Command:
-		 ```bash
-		 python src/main.py --task expand_dataset
-		 ```
+2. Compute aesthetic scores for images using CLIP embeddings.
+    ```bash
+    python src/main.py --task aesthetic_inference
+    ```
 
-4. **Train Reward Function**
-	 - Train a reward model (DeepFM) to predict user engagement or preferences.
-	 - Command:
-		 ```bash
-		 python src/main.py --task train_reward_function
-		 ```
+3. Bring the data to the individual level.
+    ```bash
+    python src/main.py --task expand_dataset
+    ```
 
-5. **Evaluate Reward Model**
-	 - Evaluate the trained reward model on a test set.
-	 - Command:
-		 ```bash
-		 python src/main.py --task evaluate
-		 ```
+4. Train a reward model to predict user engagement.
+    ```bash
+    python src/main.py --task train_reward_function
+    ```
 
-6. **Train Gender Probe**
-	 - Train a probe to predict gender from embeddings (for demographic regularization).
-	 - Command:
-		 ```bash
-		 python src/main.py --task train_clip_gender_probe
-		 ```
+5. Evaluate the trained reward model on a test set.
+    ```bash
+    python src/main.py --task evaluate
+    ```
 
-7. **Train Age Probe**
-	 - Train a probe to predict age group from embeddings (for demographic regularization, using aggregated age groups).
-	 - Command:
-		 ```bash
-		 python src/main.py --task train_clip_age_probe_aggregated
-		 ```
+6. Train a classifier to predict gender from embeddings (for demographic regularization).
+    ```bash
+    python src/main.py --task train_clip_gender_probe
+    ```
+
+7. Train a classifier to predict age group from embeddings.
+    ```bash
+    python src/main.py --task train_clip_age_probe_aggregated
+    ```
+
+8. Start fine-tuning Stable Diffusion v1.4 on all available GPUs using the experiment config. The default config is set up for multi-GPU training.
+
+    ```bash
+    accelerate launch scripts/train.py --config config/experiment.py:deep_fm
+    ```
 
 
 
+## The `ddpo` Directory
 
-
----
-
-## The `ddpo` Directory (Diffusion Model Fine-Tuning)
-
-This part of the repository is used for fine-tuning diffusion models using reinforcement learning with custom reward functions and prompts.
-
-### Usage
-
-To start fine-tuning Stable Diffusion v1.4 on all available GPUs using the DGX config:
-
-```bash
-accelerate launch scripts/train.py --config config/dgx.py:aesthetic
-```
-
-This will immediately start the fine-tuning process. The default config is set up for multi-GPU training.
-
-### Important Hyperparameters
-
-- All hyperparameters are defined in the config files (see `base.py` and `dgx.py`).
-- **prompt_fn** and **reward_fn**: Define the prompts and reward functions for training. See `ddpo_pytorch/prompts.py` and `ddpo_pytorch/rewards.py` for available options. This is also where you can find a new recommender systems reward function.
-
-
-This part is an extension of the [ddpo-pytorch repository](https://github.com/kvablack/ddpo-pytorch). For more details, see the comments in the config files and the original repository.
+This part of the repository is used for fine-tuning diffusion models using reinforcement learning with custom reward functions and prompts. It uses the learned reward function and demographic probes from the `src` part. The code is an extension of the [ddpo-pytorch](https://github.com/kvablack/ddpo-pytorch) repository. For more details, see the comments in the config files and the original repository.
 
 ---
 

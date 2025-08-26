@@ -5,7 +5,7 @@ def get_config():
     config = ml_collections.ConfigDict()
 
     ###### General ######
-    # run name for wandb logging and checkpoint saving -- if not provided, will be auto-generated based on the datetime.
+    # run name for logging and checkpoint saving -- if not provided, will be auto-generated based on the datetime.
     config.run_name = ""
     # random seed for reproducibility.
     config.seed = 42

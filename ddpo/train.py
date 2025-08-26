@@ -19,7 +19,6 @@ from stat_tracking import *
 from pipeline_with_logprob import *
 from ddim_with_logprob import *
 import torch
-import wandb
 from functools import partial
 import tqdm
 import tempfile
@@ -112,7 +111,6 @@ def main(_):
     )
 
     accelerator = Accelerator(
-        log_with="wandb",
         mixed_precision=config.mixed_precision,
         project_config=accelerator_config,
         # we always accumulate gradients across timesteps; we want config.train.gradient_accumulation_steps to be the
@@ -125,7 +123,6 @@ def main(_):
         accelerator.init_trackers(
             project_name="ddpo-pytorch",
             config=config.to_dict(),
-            init_kwargs={"wandb": {"name": config.run_name}},
         )
     logger.info(f"\n{config}")
 
@@ -682,28 +679,14 @@ def main(_):
         samples3 = {k: torch.cat([s[k] for s in samples3]) for k in samples3[0].keys()}
         samples4 = {k: torch.cat([s[k] for s in samples4]) for k in samples4[0].keys()}
 
-        # this is a hack to force wandb to log the images as JPEGs instead of PNGs
-        with tempfile.TemporaryDirectory() as tmpdir:
-            for i, image in enumerate(images):
-                pil = Image.fromarray(
-                    (image.cpu().numpy().transpose(1, 2, 0) * 255).astype(np.uint8)
-                )
-                pil = pil.resize((256, 256))
-                pil.save(os.path.join(tmpdir, f"{i}.jpg"))
-            accelerator.log(
-                {
-                    "images": [
-                        wandb.Image(
-                            os.path.join(tmpdir, f"{i}.jpg"),
-                            caption=f"{prompt:.25} | {reward:.2f}",
-                        )
-                        for i, (prompt, reward) in enumerate(
-                            zip(prompts, rewards)
-                        )  # only log rewards from process 0
-                    ],
-                },
-                step=global_step,
-            )
+    # Optionally save images as JPEGs for local inspection (wandb removed)
+    # with tempfile.TemporaryDirectory() as tmpdir:
+    #     for i, image in enumerate(images):
+    #         pil = Image.fromarray(
+    #             (image.cpu().numpy().transpose(1, 2, 0) * 255).astype(np.uint8)
+    #         )
+    #         pil = pil.resize((256, 256))
+    #         pil.save(os.path.join(tmpdir, f"{i}.jpg"))
 
         # gather rewards across processes
         rewards = accelerator.gather(samples["rewards"]).cpu().numpy()
@@ -872,7 +855,6 @@ def main(_):
                         # === Add CLIP-based regularization only at the final timestep ===
                         if j == num_train_timesteps - 1 and dem_regularizers is not None:
                             with torch.no_grad():
-                                #lambda_reg = 1.0
                                 final_latents = sample["next_latents"][:, j]
                                 decoded_images = pipeline.vae.decode(final_latents).sample # (B, 3, 256, 256)
                                 decoded_images = torch.nn.functional.interpolate(decoded_images, size=224, mode="bicubic", align_corners=False)
