@@ -3,7 +3,7 @@
 
 This repository demonstrates a proof of concept: a diffusion model can be successfully fine-tuned using reinforcement learning and functions common in recommender systems. The workflow involves creating a synthetic dataset, learning a reward function, and then fine-tuning the diffusion model. All code related to data generation and reward training is located in the `src` directory, while diffusion model fine-tuning is handled in the `ddpo` directory.
 
-This code was developed for a research study, which will be linked here once it becomes publicly available.
+Additonal information not included in the original research paper (hyperparameters, configurations, etc.) can be found in ```additional_materials.pdf```.
 
 ## Workflow Overview
 
